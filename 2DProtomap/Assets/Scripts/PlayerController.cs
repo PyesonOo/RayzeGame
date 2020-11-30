@@ -11,6 +11,14 @@ public class PlayerController : MonoBehaviour
 
     [SerializeField] float moveSpeed = 3f; //Bewegungs geschwindigkeit
     [SerializeField] float jumpSpeed = 3f; // Sprungkraft
+    [SerializeField] int bulletDamage = 1;
+    [SerializeField] float bulletSpeed = 5f;
+    [SerializeField] Transform bulletShootPos;
+    [SerializeField] GameObject bulletPrefab;
+
+
+
+
     public float groundCheckRadius;
     public LayerMask whatIsGround;
 
@@ -23,6 +31,9 @@ public class PlayerController : MonoBehaviour
     bool isGrounded;
     bool isShooting;
     bool isFacingRight;   // In welcher Richtung wir gucken
+
+    float shootTime;
+    bool keyShootRelease;
 
     void Start()
     {
@@ -42,22 +53,22 @@ public class PlayerController : MonoBehaviour
         //RaycastHit2D raycastHit;
         //float raycastDistance = 0.05f;
         //int layerMask = 1 << LayerMask.NameToLayer("Ground");
-        // ground check
+        //ground check
         //Vector3 box_origin = box2d.bounds.center;
         //box_origin.y = box2d.bounds.min.y + (box2d.bounds.extents.y / 4f);
         //Vector3 box_size = box2d.bounds.size;
         //box_size.y = box2d.bounds.size.y / 4f;
         //raycastHit = Physics2D.BoxCast(box_origin, box_size, 0f, Vector2.down, raycastDistance, layerMask);
-        // Wenn der Player auf den Ground trifft
-        //if (raycastHit.collider != null)
-        //{
-            //isGrounded = true;
-        //}
+         //Wenn der Player auf den Ground trifft
+            //if (raycastHit.collider != null)
+            //{
+                //isGrounded = true;
+            //}
         //Visuelle Zeichnung des Colliders : Grün= boden, rot= in der Luft
-        //raycastColor = (isGrounded) ? Color.green : Color.red;
-        //Debug.DrawRay(box_origin + new Vector3(box2d.bounds.extents.x, 0), Vector2.down * (box2d.bounds.extents.y / 4f + raycastDistance), raycastColor);
-        //Debug.DrawRay(box_origin - new Vector3(box2d.bounds.extents.x, 0), Vector2.down * (box2d.bounds.extents.y / 4f + raycastDistance), raycastColor);
-        //Debug.DrawRay(box_origin - new Vector3(box2d.bounds.extents.x, box2d.bounds.extents.y / 4f + raycastDistance), Vector2.right * (box2d.bounds.extents.x * 2), raycastColor);
+            //raycastColor = (isGrounded) ? Color.green : Color.red;
+            //Debug.DrawRay(box_origin + new Vector3(box2d.bounds.extents.x, 0), Vector2.down * (box2d.bounds.extents.y / 4f + raycastDistance), raycastColor);
+            //Debug.DrawRay(box_origin - new Vector3(box2d.bounds.extents.x, 0), Vector2.down * (box2d.bounds.extents.y / 4f + raycastDistance), raycastColor);
+            //Debug.DrawRay(box_origin - new Vector3(box2d.bounds.extents.x, box2d.bounds.extents.y / 4f + raycastDistance), Vector2.right * (box2d.bounds.extents.x * 2), raycastColor);
     }
 
     private void CheckSurroundings()
@@ -67,19 +78,67 @@ public class PlayerController : MonoBehaviour
 
     void Update()
     {
+        //keyHorizontal = Input.GetAxisRaw("Horizontal");
+        //keyJump = Input.GetKeyDown(KeyCode.Space);
+        //keyShoot = Input.GetKey(KeyCode.Mouse0);
+
+        //isShooting = keyShoot;
+
+        PlayerDirectionInput();
+        PlayerJumpInput();
+        PlayerShootInput();
+        PlayerMovement();
+    }
+
+    void PlayerDirectionInput()
+    {
         keyHorizontal = Input.GetAxisRaw("Horizontal");
+        
+    }
+
+    void PlayerJumpInput()
+    {
         keyJump = Input.GetKeyDown(KeyCode.Space);
+    }
+
+    void PlayerShootInput()
+    {
         keyShoot = Input.GetKey(KeyCode.Mouse0);
+        float shootTimeLenght = 0;
+        float keyShootReleaseTimeLenght = 0;
 
-        isShooting = keyShoot;
+        if(keyShoot && keyShootRelease)
+        {
+            isShooting = true;
+            keyShootRelease = false;
+            shootTime = Time.time;
+            // Den Schuss abfeuern
+            Invoke("ShootBullet", 0.1f);
+        }
+        if(!keyShoot && !keyShootRelease)
+        {
+            keyShootReleaseTimeLenght = Time.time - shootTime;
+            keyShootRelease = true;
+        }
+        if(isShooting)
+        {
+            shootTimeLenght = Time.time - shootTime;
+            if(shootTimeLenght >= 0.25f || keyShootReleaseTimeLenght >= 0.15f) // Die Zeit, wie lange wir schießen können
+            {
+                isShooting = false;          
+            }
+        }
+    }
 
+    void PlayerMovement()
+    {
         if (keyHorizontal < 0)
         {
-            if(isFacingRight)
+            if (isFacingRight)
             {
                 Flip();
             }
-            if( isGrounded)
+            if (isGrounded)
             {
                 if (isShooting)
                 {
@@ -95,15 +154,15 @@ public class PlayerController : MonoBehaviour
         }
         else if (keyHorizontal > 0)
         {
-            if(!isFacingRight)
+            if (!isFacingRight)
             {
                 Flip();
             }
-            if(isGrounded)
+            if (isGrounded)
             {
-                if(isShooting)
+                if (isShooting)
                 {
-                    animator.Play("Ryze_JumpShoot");
+                    animator.Play("Ryze_RunShoot");
                 }
                 else
                 {
@@ -117,13 +176,21 @@ public class PlayerController : MonoBehaviour
         {
             if (isGrounded)
             {
-                animator.Play("Ryze_Idle");
+                if (isShooting)
+                {
+                    animator.Play("Ryze_Shoot");
+                }
+                else
+                {
+                    animator.Play("Ryze_Idle");
+
+                }
             }
             rb2d.velocity = new Vector2(0f, rb2d.velocity.y);
         }
         if (keyJump && isGrounded)
         {
-            if(isShooting)
+            if (isShooting)
             {
                 animator.Play("Ryze_JumpShoot");
             }
@@ -135,10 +202,19 @@ public class PlayerController : MonoBehaviour
             rb2d.velocity = new Vector2(rb2d.velocity.x, jumpSpeed);
 
         }
-        
+
         if (!isGrounded)
         {
-            animator.Play("Ryze_Jump");
+            if (isShooting)
+            {
+                animator.Play("Ryze_JumpShoot");
+
+            }
+            else
+            {
+                animator.Play("Ryze_Jump");
+            }
+
         }
     }
 
@@ -147,6 +223,21 @@ public class PlayerController : MonoBehaviour
         isFacingRight = !isFacingRight;
         transform.Rotate(0f, 180f, 0);
     }
+
+    void ShootBullet()
+    {
+        GameObject bullet = Instantiate(bulletPrefab, bulletShootPos.position, Quaternion.identity);
+        bullet.name = bulletPrefab.name;
+        bullet.GetComponent<BulletScript>().SetDamageValue(bulletDamage);
+        bullet.GetComponent<BulletScript>().SetBulletSpeed(bulletSpeed);
+        bullet.GetComponent<BulletScript>().SetBulletDirection((isFacingRight) ? Vector2.right : Vector2.left);
+        bullet.GetComponent<BulletScript>().Shoot();
+
+
+
+     }
+
+    
 
     private void OnDrawGizmos()
     {
