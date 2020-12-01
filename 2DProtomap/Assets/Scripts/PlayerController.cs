@@ -5,6 +5,7 @@ using UnityEngine;
 
 public class PlayerController : MonoBehaviour
 {
+    
     Animator animator;
     BoxCollider2D box2d;
     Rigidbody2D rb2d;
@@ -17,23 +18,35 @@ public class PlayerController : MonoBehaviour
     [SerializeField] GameObject bulletPrefab;
 
 
-
-
+    public float wallCheckDistance;
+    public float wallSlidingSpeed;
     public float groundCheckRadius;
     public LayerMask whatIsGround;
 
     public Transform groundCheck;
+    public Transform wallCheck;
 
     float keyHorizontal;
     bool keyJump;
     bool keyShoot;
+    
+    
 
     bool isGrounded;
+    bool isTouchingWall;
+    bool isWallSliding;
     bool isShooting;
+    bool isTakingDamage;
+    bool isInvincible;
     bool isFacingRight;   // In welcher Richtung wir gucken
+
+    bool hitSideRight;      // Ob wir von der Rechten oder Linken Seite getroffen werden, für die Hit Animation
 
     float shootTime;
     bool keyShootRelease;
+
+    public int currentHealth;
+    public int maxHealth = 28;
 
     void Start()
     {
@@ -43,10 +56,13 @@ public class PlayerController : MonoBehaviour
 
 
         isFacingRight = true; // Char guckt nach rechts
+
+        currentHealth = maxHealth;
     }
 
     private void FixedUpdate()
     {
+        
         CheckSurroundings();
         //isGrounded = false;
         //Color raycastColor;
@@ -71,23 +87,48 @@ public class PlayerController : MonoBehaviour
             //Debug.DrawRay(box_origin - new Vector3(box2d.bounds.extents.x, box2d.bounds.extents.y / 4f + raycastDistance), Vector2.right * (box2d.bounds.extents.x * 2), raycastColor);
     }
 
+    private void CheckIfWallSliding()
+    {
+        if(isTouchingWall && !isGrounded && rb2d.velocity.y < 0)
+        {
+            isWallSliding = true;
+        }
+        else
+        {
+            isWallSliding = false;
+        }
+        
+
+    }
+
+
     private void CheckSurroundings()
     {
-        isGrounded = Physics2D.OverlapCircle(groundCheck.position,groundCheckRadius, whatIsGround);
+        isGrounded = Physics2D.OverlapCircle(groundCheck.position, groundCheckRadius, whatIsGround);
+        isTouchingWall = Physics2D.Raycast(wallCheck.position, transform.right, wallCheckDistance, whatIsGround);
     }
 
     void Update()
     {
+       
         //keyHorizontal = Input.GetAxisRaw("Horizontal");
         //keyJump = Input.GetKeyDown(KeyCode.Space);
         //keyShoot = Input.GetKey(KeyCode.Mouse0);
 
         //isShooting = keyShoot;
 
+        if(isTakingDamage)
+        {
+            animator.Play("Ryze_Hit");
+            return;
+        }
+
+
         PlayerDirectionInput();
         PlayerJumpInput();
         PlayerShootInput();
         PlayerMovement();
+        CheckIfWallSliding();
     }
 
     void PlayerDirectionInput()
@@ -216,6 +257,14 @@ public class PlayerController : MonoBehaviour
             }
 
         }
+
+        if(isWallSliding)
+        {
+            if(rb2d.velocity.y < wallSlidingSpeed)
+            {
+                rb2d.velocity = new Vector2(rb2d.velocity.x, -wallSlidingSpeed);
+            }
+        }
     }
 
     void Flip()
@@ -237,11 +286,64 @@ public class PlayerController : MonoBehaviour
 
      }
 
-    
+    public void HitSide(bool rightSide)
+    {
+        hitSideRight = rightSide;
+    }
+
+    public void Invicible(bool invincibility)
+    {
+        isInvincible = invincibility;
+    }
+
+    public void TakeDamage(int damage)
+    {
+        if (!isInvincible)
+        {
+            currentHealth -= damage;
+            Mathf.Clamp(currentHealth, 0, maxHealth); // Die Range, dass es niemals unter 0 geht und über den maxHealth
+            if (currentHealth <= 0)
+            {
+                Defeat();
+            }
+            else
+            {
+                StartDamageAnimation();
+            }
+        }
+    }
+
+    void StartDamageAnimation()
+    {
+        if(!isTakingDamage)
+        {
+            isTakingDamage = true;   //Wenn wir noch keinen schaden nehmen, dann können wir schaden nehmen
+            isInvincible = true;
+            float hitForceX = 0.50f;
+            float hitForceY = 1.5f;
+
+            if (hitSideRight) hitForceX = -hitForceX;
+            rb2d.velocity = Vector2.zero;
+            rb2d.AddForce(new Vector2(hitForceX, hitForceY), ForceMode2D.Impulse);
+        }
+    }
+
+    void StopDamageAnimation()
+    {
+        isTakingDamage = false;
+        isInvincible = false;
+        animator.Play("Ryze_Hit", -1, 0f);
+    }
+
+    void Defeat()
+    {
+        Destroy(gameObject);        //Rayze wird zerstört
+    }
 
     private void OnDrawGizmos()
     {
         Gizmos.DrawWireSphere(groundCheck.position,groundCheckRadius);
+        Gizmos.DrawLine(wallCheck.position, new Vector3(wallCheck.position.x + wallCheckDistance, wallCheck.position.y, wallCheck.position.z));
     }
 
 
