@@ -63,7 +63,16 @@ public class BulletScript : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D other)
     {
-        //Destroy(gameObject);   //Wenn unser Schuss was berührt, dann wird es zerstört
+        if(other.gameObject.CompareTag("Enemy"))
+        {
+            EnemyController enemy = other.gameObject.GetComponent<EnemyController>();
+            if(enemy !=null)
+            {
+                enemy.TakeDamage(this.damage);
+            }
+            Destroy(gameObject, 0.01f);   //Wenn unser Schuss "enemy" berührt, dann wird der Schuss zerstört
+
+        }
         
     }
 }
