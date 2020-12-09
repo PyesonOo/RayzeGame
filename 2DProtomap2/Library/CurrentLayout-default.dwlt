@@ -747,7 +747,7 @@ MonoBehaviour:
   m_LastFolders:
   - Assets
   m_LastFoldersGridSize: -1
-  m_LastProjectPath: F:\Users\Mehme\Desktop\Neuer Ordner\RayzeGame-main\2DProtomap
+  m_LastProjectPath: C:\Users\Mehme\Documents\GitHub\MS1Mehmet-MGD2_Game\RayzeGame\2DProtomap2
   m_LockTracker:
     m_IsLocked: 0
   m_FolderTreeState:
@@ -969,9 +969,9 @@ MonoBehaviour:
   m_PlayAudio: 0
   m_AudioPlay: 0
   m_Position:
-    m_Target: {x: 37.22397, y: -1.5880612, z: -20.906164}
+    m_Target: {x: 206.8201, y: 8.714774, z: -32.46134}
     speed: 2
-    m_Value: {x: 37.702553, y: -1.6711314, z: -20.82846}
+    m_Value: {x: 206.8201, y: 8.714774, z: -32.46134}
   m_RenderMode: 0
   m_CameraMode:
     drawMode: 0
@@ -1022,9 +1022,9 @@ MonoBehaviour:
     speed: 2
     m_Value: {x: 0, y: 0, z: 0, w: 1}
   m_Size:
-    m_Target: 18.052666
+    m_Target: 20.565392
     speed: 2
-    m_Value: 17.275278
+    m_Value: 20.565392
   m_Ortho:
     m_Target: 1
     speed: 2
