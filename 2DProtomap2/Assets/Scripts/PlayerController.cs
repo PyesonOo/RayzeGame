@@ -302,6 +302,7 @@ public class PlayerController : MonoBehaviour
         {
             currentHealth -= damage;
             Mathf.Clamp(currentHealth, 0, maxHealth); // Die Range, dass es niemals unter 0 geht und über den maxHealth
+            UIHealthBar.instance.SetValue(currentHealth / (float)maxHealth);    // Wie viel leben wir noch übrig haben
             if (currentHealth <= 0)
             {
                 Defeat();
@@ -318,11 +319,11 @@ public class PlayerController : MonoBehaviour
         if(!isTakingDamage)
         {
             isTakingDamage = true;   //Wenn wir noch keinen schaden nehmen, dann können wir schaden nehmen
-            isInvincible = true;
+            isInvincible = true;    //In der Zeit, wo wir Schaden nehmen, sind wir invicible
             float hitForceX = 0.50f;
             float hitForceY = 1.5f;
 
-            if (hitSideRight) hitForceX = -hitForceX;
+            if (hitSideRight) hitForceX = -hitForceX;       // In Welcher Richtung wir bouncen, wenn wir getroffen werden
             rb2d.velocity = Vector2.zero;
             rb2d.AddForce(new Vector2(hitForceX, hitForceY), ForceMode2D.Impulse);
         }
